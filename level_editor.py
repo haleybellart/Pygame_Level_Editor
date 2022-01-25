@@ -8,7 +8,7 @@ pygame.init()
 clock = pygame.time.Clock()
 FPS = 60
 
-#game wsindow
+#set game wsindow size
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 640
 LOWER_MARGIN = 100
@@ -30,7 +30,7 @@ scroll_right = False
 scroll = 0
 scroll_speed = 1 
 
-#def colors
+#define colors
 GREEN = (100, 189, 104)
 BLACk = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -49,16 +49,19 @@ for row in range (ROWS):
 for tile in range(0, MAX_COLS):
     world_data[ROWS - 1][tile] = 0
 
-#function for outputting text onto screen
+#function for drawing text onto screen
 def draw_text(text, font, text_col, x, y):
     img = font.render(text, True, text_col)
     screen.blit(img, (x,y))
 
-#load images
-pine1_img = pygame.image.load('data/img/background/pine1.png').convert_alpha()
-pine2_img = pygame.image.load('data/img/background/pine2.png').convert_alpha()
-mountain_img = pygame.image.load('data/img/background/mountain.png').convert_alpha()
-sky_img = pygame.image.load('data/img/background/sky_cloud.png').convert_alpha()
+#load background/button images
+bg_grass = pygame.image.load('data/img/background/bg_grass.png').convert_alpha()
+bg_mount = pygame.image.load('data/img/background/bg_mount.png').convert_alpha()
+bg_clouds = pygame.image.load('data/img/background/bg_clouds.png').convert_alpha()
+bg_sky = pygame.image.load('data/img/background/bg_sky.png').convert_alpha()
+save_img = pygame.image.load('data/img/save_btn.png').convert_alpha()
+load_img = pygame.image.load('data/img/load_btn.png').convert_alpha()
+
 #store tiles in list 
 img_list = []
 for x in range(TILE_TYPES):
@@ -66,19 +69,18 @@ for x in range(TILE_TYPES):
     img = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE))
     img_list.append(img)
 
-save_img = pygame.image.load('data/img/save_btn.png').convert_alpha()
-load_img = pygame.image.load('data/img/load_btn.png').convert_alpha()
 
-#create funcion for drawing background 
+#create funcion for drawing background, make background parallax  
 def draw_bg():
     screen.fill(BG)
-    width = sky_img.get_width()
+    width = bg_sky.get_width()
     for x in range(4):
-        screen.blit(sky_img, ((x * width) - scroll * 0.5, 0))
-        screen.blit(mountain_img, ((x * width) - scroll *0.6, SCREEN_HEIGHT - mountain_img.get_height() - 300))
-        screen.blit(pine1_img, ((x * width) - scroll *0.7, SCREEN_HEIGHT - pine1_img.get_height() - 150))
-        screen.blit(pine2_img, ((x * width) - scroll*0.8, SCREEN_HEIGHT - pine2_img.get_height()))
+        screen.blit(bg_sky, ((x * width) - scroll * 0.5, 0))
+        screen.blit(bg_clouds, ((x * width) - scroll * 0.6, SCREEN_HEIGHT - bg_clouds.get_height() - 250))
+        screen.blit(bg_mount, ((x * width) - scroll * 0.7, SCREEN_HEIGHT - bg_mount.get_height() - 150))
+        screen.blit(bg_grass, ((x * width) - scroll * 0.8, SCREEN_HEIGHT - bg_grass.get_height()))
 
+#create function for tile grid 
 def draw_grid():
     #vertical lines
     for c in range(MAX_COLS + 1):
@@ -99,7 +101,7 @@ def draw_world():
 save_button = button.Button(SCREEN_WIDTH // 2, SCREEN_HEIGHT + LOWER_MARGIN-50, save_img, 1)
 load_button = button.Button(SCREEN_WIDTH // 2 + 200, SCREEN_HEIGHT + LOWER_MARGIN-50, load_img, 1)
 
-#make buttons list
+#make buttons/tiles list
 button_list = []
 button_col = 0
 button_row = 0
@@ -111,6 +113,7 @@ for i in range(len(img_list)):
         button_row += 1
         button_col = 0
 
+#main loop
 run = True
 while run: 
 
@@ -122,14 +125,10 @@ while run:
 
     draw_text(f'Level: {level}', font, WHITE, 10, SCREEN_HEIGHT + LOWER_MARGIN - 90)
     draw_text('Press UP or DOWN to change level', font, WHITE, 10, SCREEN_HEIGHT + LOWER_MARGIN - 60)
-
+    draw_text('Hold CONTROL to speed up scrolling', font, WHITE, 10, SCREEN_HEIGHT + LOWER_MARGIN - 30)
 
     #save/load data
     if save_button.draw(screen):
-        #save level data
-        #pickle_out = open(f'level_{level}_data', 'wb')
-        #pickle.dump(world_data, pickle_out)
-        #pickle_out.close()
         with open(f'data/levels/level_{level}_data.csv', 'w', newline='') as csvfile: 
             writer = csv.writer(csvfile, delimiter = ',')
             for row in world_data: 
@@ -162,15 +161,12 @@ while run:
     #highlight selected tile
     pygame.draw.rect(screen, WHITE, button_list[current_tile].rect, 3)
 
-
     #scroll map
     if scroll_left == True and scroll > 0: 
         scroll  -= 5 * scroll_speed
     if scroll_right == True and scroll < (MAX_COLS * TILE_SIZE) - SCREEN_WIDTH: 
         scroll += 5 * scroll_speed
 
-
-    #add new tiles to screen
     #get mouse position 
     pos = pygame.mouse.get_pos()
     x = (pos[0]+ scroll) // TILE_SIZE
